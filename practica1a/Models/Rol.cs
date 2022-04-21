@@ -19,5 +19,7 @@ namespace practica1a.Models
 
         public virtual List<RolUsuario>? RolsUsuarios { get; set; }
 
+        public int? Status { get; set; }
+
     }
 }

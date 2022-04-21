@@ -1,10 +1,12 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using practica1a.Data;
 using practica1a.DataObj;
 using practica1a.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace practica1a.Services.ProductoService
@@ -13,11 +15,14 @@ namespace practica1a.Services.ProductoService
     {
 
         private readonly practicaDbContext _db;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
 
-        public ProductoService(practicaDbContext db)
+        public ProductoService(practicaDbContext db, IHttpContextAccessor httpContextAccessor)
         {
             _db = db;
+            _httpContextAccessor = httpContextAccessor;
+
         }
 
 
@@ -26,6 +31,7 @@ namespace practica1a.Services.ProductoService
 
             return await _db.Productos
                 .Include(x => x.Categorias)
+                .Where(x => x.Status == 1 || x.Status == null)
                 .ToListAsync();
 
         }
@@ -77,6 +83,7 @@ namespace practica1a.Services.ProductoService
                 producto.Stock = productoDto.Stock;
                 producto.Foto = productoDto.Foto;
                 producto.CategoriaId = productoDto.CategoriaId;
+                producto.Status = 1;
                 _db.Productos.Add(producto);
                 await _db.SaveChangesAsync();
 
@@ -107,6 +114,7 @@ namespace practica1a.Services.ProductoService
             Iproducto.Precio = productoDto.Precio;
             Iproducto.Stock = productoDto.Stock;
             Iproducto.CategoriaId = productoDto.CategoriaId;
+            Iproducto.Status = 1;
             await _db.SaveChangesAsync();
 
             res.Message = "Producto actualizado";
@@ -118,8 +126,15 @@ namespace practica1a.Services.ProductoService
 
         public async Task<ResponseAction<Producto>> DeleteProducto(int id)
         {
-
             var res = new ResponseAction<Producto>();
+
+            var identity = _httpContextAccessor.HttpContext.User.Identity as ClaimsIdentity;
+            var historialProductoEliminado = new HistorialProductosEliminados();
+            var userClaims = identity.Claims;
+            int.TryParse(userClaims.FirstOrDefault(u => u.Type == ClaimTypes.NameIdentifier)?.Value, out var idusuario);
+            var usuario = await _db.Usuarios.FirstOrDefaultAsync(x => x.Id == idusuario);
+            DateTime dateTime = DateTime.Now;
+
 
             var IProducto = await _db.Productos.FindAsync(id);
 
@@ -130,11 +145,21 @@ namespace practica1a.Services.ProductoService
                 return res;
 
             }
-            _db.Productos.Remove(IProducto);
+
+            IProducto.Status = 0;
+
+            historialProductoEliminado.UsuarioId = usuario.Id;
+            historialProductoEliminado.NombreUsuario = usuario.Nombre;
+            historialProductoEliminado.IdProductoEliminado = IProducto.Id;
+            historialProductoEliminado.NombreProductoEliminado = IProducto.Nombre;
+            historialProductoEliminado.Fecha = dateTime.ToString("yyyy/MM/dd hh:mm:ss");
+
+            _db.HistorialProductosEliminados.Add(historialProductoEliminado);
             await _db.SaveChangesAsync();
 
             res.Data = IProducto;
             res.Success = true;
+            res.Message = "producto elimnado";
             return res;
 
 

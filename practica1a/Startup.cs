@@ -1,34 +1,26 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Microsoft.OpenApi.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using practica1a.Data;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
-using practica1a.Services.UsuarioService;
-using practica1a.Services.RolService;
-using practica1a.Services.ProductoService;
+using Microsoft.OpenApi.Models;
+using practica1a.Data;
 using practica1a.Services.CategoriaService;
-using practica1a.Services.VentaService;
+using practica1a.Services.CompraService;
+using practica1a.Services.ComprobarVentaService;
+using practica1a.Services.DetalleCompraService;
 using practica1a.Services.DetalleVentaService;
 using practica1a.Services.LoginService;
-using practica1a.Services.CompraService;
-using practica1a.Services.DetalleCompraService;
-using practica1a.Services.OrdenCompraService;
-using practica1a.Services.ComprobarVentaService;
-using practica1a.Services.scheduled;
+using practica1a.Services.ProductoService;
 using practica1a.Services.ProveedoresService;
+using practica1a.Services.RolService;
+using practica1a.Services.scheduled;
+using practica1a.Services.UsuarioService;
+using practica1a.Services.VentaService;
+using System.Text;
 
 namespace practica1a
 {
@@ -113,7 +105,6 @@ namespace practica1a
             services.AddScoped<ILoginService, LoginService>();
             services.AddScoped<ICompraService, CompraService>();
             services.AddScoped<IDetalleCompraService, DetalleCompraService>();
-            services.AddScoped<IOrdenCompraService, OrdenCompraService>();
             services.AddScoped<IComprobarVentaService, ComprobarVentaService>();
             services.AddScoped<IProveedoresService, ProveedoresService>();
             services.AddScoped<ISheduled, scheduled>();

@@ -16,7 +16,6 @@ namespace practica1a.DataObj
 
         public string Foto { get; set; }
 
-
         public int CategoriaId { get; set; }
 
 

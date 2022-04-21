@@ -14,8 +14,8 @@ namespace practica1a.Models
         public string TipoCategoria { get; set; }
 
 #nullable enable
-       
-        //public virtual IEnumerable<Producto>? Productos { get; set; }
+        public virtual List<ProveedorCategoria>? ProveedorCategorias { get; set; }
+        public int? Status { get; set; }
 
 
     }

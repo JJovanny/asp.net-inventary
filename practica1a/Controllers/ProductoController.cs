@@ -63,17 +63,17 @@ namespace practica1a.Controllers
 
         }
 
+        //[Authorize(Roles = "Admin")]
+        //[HttpPut("{id}")]
+        //public async Task<ResponseAction<Producto>> PutProducto(int id, ProductoDto putProducto)
+        //{
+
+        //    return await _service.PutProducto(id, putProducto);
+
+        //}
+
         [Authorize(Roles = "Admin")]
-        [HttpPut("{id}")]
-        public async Task<ResponseAction<Producto>> PutProducto(int id, ProductoDto putProducto)
-        {
-
-            return await _service.PutProducto(id, putProducto);
-
-        }
-
-        [Authorize(Roles = "Admin")]
-        [HttpDelete("id")]
+        [HttpGet,Route("Delete/{id}")]
         public async Task<ResponseAction<Producto>> DeleteProducto(int id)
         {
 

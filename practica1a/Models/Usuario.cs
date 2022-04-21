@@ -24,8 +24,7 @@ namespace practica1a.Models
 
         public string Foto { get; set; } = null;
 
-#nullable enable
-        //public virtual List<OrdenCompra>? OrdenCompras { get; set; }
+       #nullable enable
 
         public virtual List<RolUsuario>? RolsUsuarios { get; set; }
 
@@ -33,6 +32,9 @@ namespace practica1a.Models
 
         public UsuarioSession? UsuariosSession { get; set; }
 
+        public virtual List<Direcciones>? Direcciones { get; set; }
+
+        public int? Status { get; set; }
 
     }
 }

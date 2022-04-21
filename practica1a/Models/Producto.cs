@@ -25,6 +25,7 @@ namespace practica1a.Models
 
         public int CategoriaId { get; set; }
 
+        public int? Status { get; set; }
 
 
     }

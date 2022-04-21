@@ -24,5 +24,11 @@ namespace practica1a.Models
 
         public string Telefono { get; set; }
 
+        #nullable enable
+        public virtual List<ProveedorCategoria>? ProveedorCategorias { get; set; }
+
+        public int? Status { get; set; }
+
+
     }
 }

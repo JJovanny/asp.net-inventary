@@ -56,7 +56,7 @@ namespace practica1a.Services.DetalleVentaService
             var res = new ResponseAction<DetalleVenta>();
             var usuario = await _db.Usuarios.FindAsync(detalleVentaDto.UserId);
 
-            DateTime fecha = DateTime.Parse(detalleVentaDto.Fecha);
+            var fecha = DateTime.Parse(detalleVentaDto.Fecha);
 
             int resultado = DateTime.Compare(fecha, DateTime.Now);
 
@@ -67,7 +67,7 @@ namespace practica1a.Services.DetalleVentaService
             var detalle = new DetalleVenta
             {
                 UsuarioId = usuario.Id,
-                Fecha = fecha,
+                Fecha = detalleVentaDto.Fecha,
             };
 
             _db.DetalleVentas.Add(detalle);
@@ -91,7 +91,7 @@ namespace practica1a.Services.DetalleVentaService
             if (usuario == null) { res.Message = "No existe el usaurio"; return res; }
 
             iDetalle.UsuarioId = detalleVentaDto.UserId;
-            iDetalle.Fecha = fecha;
+            iDetalle.Fecha = detalleVentaDto.Fecha;
             await _db.SaveChangesAsync();
 
             res.Message = "Detallede venta actualizada";

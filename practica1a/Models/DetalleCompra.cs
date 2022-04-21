@@ -27,6 +27,8 @@ namespace practica1a.Models
 
         public string? Verificada { get; set; }
 
+        public int? Status { get; set; }
+
 
     }
 }

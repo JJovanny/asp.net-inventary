@@ -1,10 +1,12 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using practica1a.Data;
 using practica1a.DataObj;
 using practica1a.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace practica1a.Services.UsuarioService
@@ -12,10 +14,14 @@ namespace practica1a.Services.UsuarioService
     public class UsuarioService : IUsuarioService
     {
         private readonly practicaDbContext _db;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public UsuarioService(practicaDbContext db)
+
+        public UsuarioService(practicaDbContext db, IHttpContextAccessor httpContextAccessor)
         {
             _db = db;
+            _httpContextAccessor = httpContextAccessor;
+
 
         }
 
@@ -25,6 +31,7 @@ namespace practica1a.Services.UsuarioService
 
             var usuarios = await _db.Usuarios
                 .Include(x => x.UsuariosSession.Rols)
+                .Where(x => x.Status != 0 || x.Status == null)
                 .ToListAsync();
 
             if (usuarios.Count > 0)
@@ -69,6 +76,8 @@ namespace practica1a.Services.UsuarioService
 
             var rol = await _db.Rols.FindAsync(usuario.RolId);
 
+            var salt = BCrypt.Net.BCrypt.GenerateSalt();
+            var passwordEncrypt = BCrypt.Net.BCrypt.HashPassword(usuario.Password, salt);
 
             var usuarioPorUsername = await _db.Usuarios.FirstOrDefaultAsync(x => x.Username == usuario.Username);
 
@@ -87,7 +96,7 @@ namespace practica1a.Services.UsuarioService
                         usuarioNuevo.Apellido = usuario.Apellido;
                         usuarioNuevo.Direccion = usuario.Direccion;
                         usuarioNuevo.Username = usuario.Username;
-                        usuarioNuevo.Password = usuario.Password;
+                        usuarioNuevo.Password = passwordEncrypt;
                         usuarioNuevo.Foto = usuario.Foto;
 
                         _db.Usuarios.Add(usuarioNuevo);
@@ -109,10 +118,13 @@ namespace practica1a.Services.UsuarioService
                         usuarioNuevo.UsuarioSessionId = usuarioSessionNuevo.Id;
                         await _db.SaveChangesAsync();
 
+                        var UsuarioId = await _db.Usuarios.
+                         Include(x => x.UsuariosSession.Rols)
+                         .FirstOrDefaultAsync(x => x.Id == usuarioNuevo.Id);
 
                         resposne.Message = "Usuario creado";
                         resposne.Success = true;
-                        resposne.Data = usuarioNuevo;
+                        resposne.Data = UsuarioId;
                         return resposne;
                     }
                     else
@@ -143,11 +155,14 @@ namespace practica1a.Services.UsuarioService
 
         }
 
+
         public async Task<ResponseAction<Usuario>> PutUsuario(int id, UsuarioDto usuario)
         {
             var response = new ResponseAction<Usuario>();
 
-            var UsuarioId = await _db.Usuarios.FindAsync(id);
+            var UsuarioId = await _db.Usuarios.
+                Include(x => x.UsuariosSession.Rols)
+                .FirstOrDefaultAsync(x => x.Id == id);
 
             var rolUsuario = await _db.RolsUsuarios
                 .Where(x => x.UsuarioId == UsuarioId.Id && x.RolId == usuario.RolId)
@@ -196,8 +211,19 @@ namespace practica1a.Services.UsuarioService
         {
             var response = new ResponseAction<Usuario>();
 
-            var user = await _db.Usuarios.FindAsync(id);
-            if (user == null)
+            var usuarioEliminado = await _db.Usuarios.FindAsync(id);
+
+            var identity = _httpContextAccessor.HttpContext.User.Identity as ClaimsIdentity;
+            var historialUsuariosEliminados = new HistorialUsuariosEliminados();
+            var userClaims = identity.Claims;
+            int.TryParse(userClaims.FirstOrDefault(u => u.Type == ClaimTypes.NameIdentifier)?.Value, out var idusuario);
+            
+            var usuarioSession = await _db.Usuarios.FirstOrDefaultAsync(x => x.Id == idusuario);
+            DateTime dateTime = DateTime.Now;
+
+            
+
+            if (usuarioEliminado == null)
             {
                 response.Message = $"El usuario con el id {id} no existe";
                 response.Success = false;
@@ -206,8 +232,19 @@ namespace practica1a.Services.UsuarioService
 
             }
 
-            _db.Usuarios.Remove(user);
+            usuarioEliminado.Status = 0;
+
+            historialUsuariosEliminados.UsuarioId = usuarioSession.Id;
+            historialUsuariosEliminados.NombreUsuario = usuarioSession.Nombre;
+
+            historialUsuariosEliminados.IdUsuarioEliminado = usuarioEliminado.Id;
+            historialUsuariosEliminados.NombreUsuarioEliminado = usuarioEliminado.Nombre;
+
+            historialUsuariosEliminados.Fecha = dateTime.ToString("yyyy/MM/dd hh:mm:ss");
+            
+            _db.HistorialUsuariosEliminados.Add(historialUsuariosEliminados);
             await _db.SaveChangesAsync();
+
 
             response.Message = $"El usuario con el id {id} ha sido eliminado";
             response.Success = true;
@@ -216,11 +253,14 @@ namespace practica1a.Services.UsuarioService
 
         }
 
+
+
         public async Task<ResponseAction<Usuario>> GetUsuarioUsername(string username)
         {
 
 
             var usuarioUsername = await _db.Usuarios.FirstOrDefaultAsync(x => x.Username == username);
+
 
             var response = new ResponseAction<Usuario>();
 

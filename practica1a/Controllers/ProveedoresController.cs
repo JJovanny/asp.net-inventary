@@ -74,7 +74,7 @@ namespace practica1a.Controllers
 
 
 
-        [HttpDelete("{id}")]
+        [HttpGet, Route("Delete/{id}")]
         public async Task<ResponseAction<Dto>> DeleteProveedor(int id)
         {
 

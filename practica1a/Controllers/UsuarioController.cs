@@ -84,7 +84,7 @@ namespace practica1a.Controllers
         }
 
         [Authorize(Roles = "Admin")]
-        [HttpDelete("{id}")]
+        [HttpGet,Route("Delete/{id}")]
         public async Task<ResponseAction<Usuario>> DeleteUsuario(int id)
         {
 

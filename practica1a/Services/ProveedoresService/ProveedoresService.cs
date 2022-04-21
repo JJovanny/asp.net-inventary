@@ -1,10 +1,12 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using practica1a.Data;
 using practica1a.DataObj;
 using practica1a.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace practica1a.Services.ProveedoresService
@@ -13,17 +15,22 @@ namespace practica1a.Services.ProveedoresService
     {
 
         private readonly practicaDbContext _db;
+        IHttpContextAccessor _httpContextAccessor;
 
-        public ProveedoresService(practicaDbContext db)
+        public ProveedoresService(practicaDbContext db, IHttpContextAccessor httpContextAccessor)
         {
             _db = db;
+            _httpContextAccessor = httpContextAccessor;
+
 
         }
 
         public async Task<List<Dto>> GetProveedores()
         {
 
-            var proveedores = await _db.Proveedores.ToListAsync();
+            var proveedores = await _db.Proveedores.
+                Where(x => x.Status != 0 || x.Status == null)
+                .ToListAsync();
 
             var dtolis = new List<Dto>();
 
@@ -134,13 +141,13 @@ namespace practica1a.Services.ProveedoresService
 
             }
 
-
             proveedor.Nombres = dto.Dt1;
             proveedor.Apellidos = dto.Dt2;
             proveedor.Rif = dto.Dt3;
             proveedor.Empresa = dto.Dt4;
             proveedor.Telefono = dto.Dt5;
             proveedor.Direccion = dto.Dt6;
+
 
             await _db.SaveChangesAsync();
 
@@ -162,11 +169,20 @@ namespace practica1a.Services.ProveedoresService
         public async Task<ResponseAction<Dto>> DeleteProveedor(int Id)
         {
 
-            var proveedor = await _db.Proveedores.FindAsync(Id);
+            var proveedorEliminado = await _db.Proveedores.FindAsync(Id);
             var res = new ResponseAction<Dto>();
             var dto = new Dto();
 
-            if (proveedor == null)
+            var identity = _httpContextAccessor.HttpContext.User.Identity as ClaimsIdentity;
+            var historialProveedorEliminado = new HistorialProveedorEliminado();
+            var userClaims = identity.Claims;
+            int.TryParse(userClaims.FirstOrDefault(u => u.Type == ClaimTypes.NameIdentifier)?.Value, out var idusuario);
+
+            var usuarioSession = await _db.Usuarios.FirstOrDefaultAsync(x => x.Id == idusuario);
+            DateTime dateTime = DateTime.Now;
+
+
+            if (proveedorEliminado == null)
             {
 
                 res.Message = "no hay provedor con ese id";
@@ -174,8 +190,19 @@ namespace practica1a.Services.ProveedoresService
 
             }
 
-            _db.Proveedores.Remove(proveedor);
+            proveedorEliminado.Status = 0;
+
+            historialProveedorEliminado.UsuarioId = usuarioSession.Id;
+            historialProveedorEliminado.NombreUsuario = usuarioSession.Nombre;
+
+            historialProveedorEliminado.IdProveedorEliminado = proveedorEliminado.Id;
+            historialProveedorEliminado.NombreProveedorEliminado = proveedorEliminado.Nombres;
+
+            historialProveedorEliminado.Fecha = dateTime.ToString("yyyy/MM/dd hh:mm:ss");
+
+            _db.HistorialProveedorEliminados.Add(historialProveedorEliminado);
             await _db.SaveChangesAsync();
+
 
             dto.Ndt1 = 1;
 

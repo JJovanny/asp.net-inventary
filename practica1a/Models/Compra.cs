@@ -29,6 +29,7 @@ namespace practica1a.Models
         [Column(TypeName = "decimal(18,2")]
         public decimal Total { get; set; }
 
+        public int? Status { get; set; }
 
 
 
